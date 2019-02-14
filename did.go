@@ -19,6 +19,7 @@ var (
 	flags  = pflag.NewFlagSet(filepath.Base(os.Args[0]), pflag.ContinueOnError)
 	dbFile = flags.String("db", "$HOME/.did.db", "db file")
 	format = flags.String("format", `{{.GetTime.Local.Format "15:04"}}: {{.GetMessage}}`, "format template")
+	join   = flags.String("join", "\n", "string to print between messages")
 )
 
 func init() {
@@ -81,13 +82,18 @@ func history(didDB *db.DB, day time.Time) error {
 	if err != nil {
 		return err
 	}
-	for _, record := range history {
+	for i, record := range history {
+		if i > 0 {
+			if _, err := fmt.Fprint(os.Stdout, *join); err != nil {
+				return err
+			}
+		}
 		if err := render(record); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintln(os.Stdout); err != nil {
-			return err
-		}
+	}
+	if _, err := fmt.Fprintln(os.Stdout); err != nil {
+		return err
 	}
 	return nil
 }
